@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+from pathlib import Path
 from typing import Any
 
 import voluptuous as vol
@@ -12,9 +14,11 @@ from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
-from .const import DOMAIN, SERVICE_HISTORY
+from .const import CARD_URL, DOMAIN, SERVICE_HISTORY
 from .ledger import month_summary
 from .tracker import Tracker
+
+_LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
@@ -62,7 +66,43 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         return out
 
     hass.services.async_register(DOMAIN, SERVICE_HISTORY, history, schema=HISTORY_SCHEMA, supports_response=SupportsResponse.ONLY)
+    await _register_cards(hass)
     return True
+
+
+async def _register_cards(hass: HomeAssistant) -> None:
+    """Serve the cards and load them on every dashboard, so they show in the card picker with no extra step. Skipped when there is no web
+    server (tests, safe mode)."""
+    if getattr(hass, "http", None) is None:
+        return
+    try:
+        from homeassistant.components.frontend import add_extra_js_url
+        from homeassistant.components.http import StaticPathConfig
+
+        path = Path(__file__).parent / "www" / "clockwatch-cards.js"
+        await hass.async_add_executor_job(_remove_stale_compressed, path)
+        await hass.http.async_register_static_paths([StaticPathConfig(CARD_URL, str(path), cache_headers=False)])
+        version = (await hass.async_add_executor_job(_version)) or "0"
+        add_extra_js_url(hass, f"{CARD_URL}?v={version}")
+    except Exception:
+        _LOGGER.warning("Could not register the Clockwatch cards", exc_info=True)
+
+
+def _remove_stale_compressed(path: Path) -> None:
+    """A pre-compressed copy (.gz or .br) beside the cards is sent to browsers in their place; remove any older than the cards themselves."""
+    for suffix in (".gz", ".br"):
+        copy = path.with_name(path.name + suffix)
+        try:
+            if copy.exists() and copy.stat().st_mtime < path.stat().st_mtime:
+                copy.unlink()
+        except OSError as err:
+            _LOGGER.warning("Could not remove %s: %s", copy, err)
+
+
+def _version() -> str:
+    import json
+
+    return json.loads((Path(__file__).parent / "manifest.json").read_text(encoding="utf-8")).get("version", "0")
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ClockwatchConfigEntry) -> bool:

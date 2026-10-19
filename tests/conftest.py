@@ -30,8 +30,12 @@ CAR_SENSORS = {  # unique-id suffix: (object id, state, unit)
     "drive_state_speed": ("speed", "0", "mph"),
     "climate_state_outside_temp": ("outside_temperature", "9", "°C"),
 }
-SITE_SENSORS = {"solar_power": "my_home_solar_power", "battery_power": "my_home_battery_power", "grid_power": "my_home_grid_power",
-                "load_power": "my_home_load_power"}
+SITE_SENSORS = {
+    "solar_power": "my_home_solar_power",
+    "battery_power": "my_home_battery_power",
+    "grid_power": "my_home_grid_power",
+    "load_power": "my_home_load_power",
+}
 
 
 @pytest.fixture(autouse=True)
@@ -55,6 +59,10 @@ async def car(hass: HomeAssistant) -> str:
     for suffix, (obj, state, unit) in CAR_SENSORS.items():
         e = ent_reg.async_get_or_create("sensor", "teslemetry", f"{VIN}-{suffix}", device_id=car_dev.id, config_entry=tes, suggested_object_id=obj)
         put(hass, e.entity_id, state, unit)
+    loc = ent_reg.async_get_or_create("device_tracker", "teslemetry", f"{VIN}-location", device_id=car_dev.id, config_entry=tes, suggested_object_id="location")
+    hass.states.async_set(loc.entity_id, "home")
+    hass.states.async_set("zone.home", "0", {"friendly_name": "Home", "latitude": 51.44, "longitude": 0.37})
+    hass.states.async_set("zone.work", "0", {"friendly_name": "Work", "latitude": 51.50, "longitude": -0.02})
     for suffix, obj in SITE_SENSORS.items():
         e = ent_reg.async_get_or_create("sensor", "teslemetry", f"{SITE}-{suffix}", device_id=site.id, config_entry=tes, suggested_object_id=obj)
         put(hass, e.entity_id, "0", "kW")
@@ -75,6 +83,7 @@ def settings(car_id: str, **over: Any) -> dict[str, Any]:
         "shift_state_entity": "sensor.shift_state",
         "speed_entity": "sensor.speed",
         "outside_temp_entity": "sensor.outside_temperature",
+        "location_entity": "device_tracker.location",
         "battery_capacity_kwh": 57.5,
         "solar_power_entity": "sensor.my_home_solar_power",
         "battery_power_entity": "sensor.my_home_battery_power",
@@ -118,7 +127,12 @@ class Clock:
             put(self.hass, f"sensor.my_home_{name}_power", v, "kW")
 
     def set(self, entity_id: str, value: Any, unit: str | None = None) -> None:
-        put(self.hass, entity_id, value, unit or (self.hass.states.get(entity_id).attributes.get("unit_of_measurement") if self.hass.states.get(entity_id) else None))
+        put(
+            self.hass,
+            entity_id,
+            value,
+            unit or (self.hass.states.get(entity_id).attributes.get("unit_of_measurement") if self.hass.states.get(entity_id) else None),
+        )
 
     def step(self, minutes: int = 1) -> None:
         for _ in range(minutes):

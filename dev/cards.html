@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clockwatch cards harness</title>
+<!-- A development page: every card style, with stand-ins for Home Assistant's ha-card, ha-icon and the clockwatch.history action. Serve the repo root
+     and open /dev/cards.html. Add ?dark for the dark theme, ?metric for a metric Home Assistant, ?empty for no receipts yet, ?only=charge-curve
+     to show one card and ?zoom=1.8 to enlarge it (used for the README screenshots). -->
+<style>
+  :root{--primary-color:#03a9f4;--rgb-primary-color:3,169,244;--primary-text-color:#212121;--secondary-text-color:#727272;--text-primary-color:#fff;
+    --card-background-color:#fff;--secondary-background-color:#f2f4f5;--divider-color:rgba(0,0,0,.12);--success-color:#2e7d32;--rgb-success-color:76,175,80;
+    --error-color:#db4437;--bg:#f4f5f7;color-scheme:light}
+  :root.dark{--primary-text-color:#e1e1e1;--secondary-text-color:#9b9b9b;--card-background-color:#1c1c1c;--secondary-background-color:#2a2a2a;
+    --divider-color:rgba(225,225,225,.12);--success-color:#81c784;--rgb-success-color:129,199,132;--bg:#111;color-scheme:dark}
+  body{margin:0;background:var(--bg);color:var(--primary-text-color);font-family:Roboto,system-ui,sans-serif;font-size:14px;padding-block:24px;
+    padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px;max-width:1120px;margin:0 auto}
+  .grid.one{grid-template-columns:400px;justify-content:center}
+  figure{margin:0;min-width:0}
+  figcaption{font-size:12px;color:var(--secondary-text-color);margin:0 0 6px 4px;letter-spacing:.04em;text-transform:uppercase}
+  .one figcaption{display:none}
+  ha-card{display:block;background:var(--card-background-color);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+</style>
+<script>
+  const P = new URLSearchParams(location.search);
+  if (P.has("dark")) document.documentElement.classList.add("dark");
+  if (P.get("zoom")) document.documentElement.style.zoom = P.get("zoom");
+  // Like Home Assistant's ha-card, styled from inside its own shadow root so it works within the cards' shadow roots too.
+  customElements.define("ha-card", class extends HTMLElement {
+    constructor() { super(); this.attachShadow({ mode: "open" }).innerHTML = `<style>:host{display:block;background:var(--card-background-color);border-radius:12px;
+      box-shadow:0 1px 3px rgba(0,0,0,.14);overflow:hidden;color:var(--primary-text-color)}</style><slot></slot>`; }
+  });
+  customElements.define("ha-icon", class extends HTMLElement {
+    connectedCallback() { this.textContent = ({ "mdi:ev-station": "⚡" })[this.getAttribute("icon")] || "●"; }
+  });
+</script>
+<script src="../custom_components/clockwatch/www/clockwatch-cards.js"></script>
+</head>
+<body>
+<div class="grid" id="grid"></div>
+<script>
+  // A sunny afternoon charge: solar first, the home battery tops up the dip when a cloud passes, grid for the last few minutes.
+  const curve = [];
+  for (let m = 0; m <= 150; m += 5) {
+    const cloud = m > 55 && m < 80;
+    const kw = m < 4 ? 3 : m > 140 ? 7.2 - (m - 140) * 0.5 : 7.2;
+    const solar = m > 130 ? 0.15 : cloud ? 0.3 : 0.85;
+    const batt = m > 130 ? 0.1 : cloud ? 0.55 : 0.1;
+    curve.push([m, +kw.toFixed(2), solar, batt]);
+  }
+  const charge = {
+    started: "2026-10-19T12:10:00+01:00", ended: "2026-10-19T14:40:00+01:00", kwh: 17.4,
+    energy: { solar: 12.1, battery: 3.2, grid: 2.1 }, cost: 1.53, cost_if_solar_free: 0.44, cost_by_source: { solar: 1.09, battery: 0.28, grid: 0.16 },
+    solar_share: 0.695, battery_share: 0.184, grid_share: 0.121, soc_start: 41, soc_end: 72, peak_kw: 7.2, miles_added: 71.3, cost_per_mile: 0.0215, curve,
+  };
+  const trip = {
+    started: "2026-10-19T17:45:00+01:00", ended: "2026-10-19T18:22:00+01:00", miles: 18.6, km: 29.9, minutes: 37, avg_mph: 30.2, max_mph: 62,
+    kwh: 4.4, miles_per_kwh: 4.23, cost: 0.38, cost_per_mile: 0.0204, sunshine: 0.62, soc_start: 72, soc_end: 64, outside_temp: 12,
+    petrol_cost: 5.31, saved: 4.93, compare_name: "the X3 M40i", from: "Home", to: "Work",
+  };
+  const older = [
+    { ...trip, ended: "2026-10-17T09:10:00+01:00", kwh: 5.17, miles_per_kwh: 3.6 }, { ...trip, ended: "2026-10-12T19:00:00+01:00", kwh: 4.65, miles_per_kwh: 4.0 },
+    { ...trip, ended: "2026-10-08T08:30:00+01:00", kwh: 5.47, miles_per_kwh: 3.4 },
+  ];
+  const night = { ...charge, started: "2026-10-16T23:40:00+01:00", ended: "2026-10-17T03:20:00+01:00", energy: { solar: 0, battery: 0, grid: 24.8 }, kwh: 24.8,
+    cost: 1.74, cost_if_solar_free: 1.74, solar_share: 0, battery_share: 0, grid_share: 1, soc_start: 30, soc_end: 74, miles_added: 101.6, cost_per_mile: 0.0171,
+    curve: [[0, 7.2, 0, 0], [110, 7.2, 0, 0], [220, 7.1, 0, 0]] };
+  const charges = [{ ...charge, ended: "2026-10-03T14:00:00+01:00" }, { ...night, ended: "2026-10-09T03:00:00+01:00" }, night, charge];
+  const month = { month: "2026-10", charges: 9, charge_kwh: 148.2, charge_cost: 11.42, solar_share: 0.46, trips: 31, miles: 612, trip_cost: 13.1,
+    cost_per_mile: 0.0214, petrol_cost: 174.9, saved: 161.8 };
+  const empty = P.has("empty");
+  const states = {
+    "sensor.clockwatch_model_3_last_charge": { state: "17.4", last_updated: "1", attributes: empty ? {} : charge },
+    "sensor.clockwatch_model_3_last_trip": { state: "18.6", last_updated: "1", attributes: empty ? {} : trip },
+    "sensor.clockwatch_model_3_charging_cost_this_month": { state: "11.42", last_updated: "1", attributes: empty ? {} : month },
+  };
+  const hass = {
+    states, entities: Object.fromEntries(Object.keys(states).map((id) => [id, { platform: "clockwatch" }])),
+    config: { currency: "GBP", unit_system: { length: P.has("metric") ? "km" : "mi" } }, locale: { language: "en-GB" },
+    connection: {
+      async sendMessagePromise(msg) {
+        await new Promise((r) => setTimeout(r, 100));
+        const d = msg.service_data;
+        const ch = [night, ...charges.slice(0, 2)].filter((c) => !d.month || c.ended.startsWith(d.month));
+        return { response: { charges: d.month ? charges : [charge, ...ch], trips: [trip, ...older], month } };
+      },
+    },
+  };
+  const cards = [
+    ["charge", "curve"], ["charge", "classic"], ["charge", "pump"], ["charge", "minimal"],
+    ["trip", "pass"], ["trip", "tillroll"], ["trip", "strip"], ["trip", "score"], ["month", null],
+  ];
+  const only = P.get("only");
+  const grid = document.getElementById("grid");
+  if (only) grid.classList.add("one");
+  for (const [kind, style] of cards) {
+    const name = style ? `${kind}-${style}` : kind;
+    if (only && only !== name) continue;
+    const fig = document.createElement("figure");
+    fig.innerHTML = `<figcaption>${name}</figcaption>`;
+    const el = document.createElement(`clockwatch-${kind}-card`);
+    el.setConfig(style ? { style, ...(P.get("units") ? { units: P.get("units") } : {}) } : {});
+    el.hass = hass;
+    fig.appendChild(el);
+    grid.appendChild(fig);
+  }
+</script>
+</body>
+</html>

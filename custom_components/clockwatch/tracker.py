@@ -22,6 +22,7 @@ from .const import (
     CONF_CHARGER_POWER,
     CONF_CHARGING_STATE,
     CONF_COMPARE_ECONOMY,
+    CONF_COMPARE_NAME,
     CONF_COMPARE_UNIT,
     CONF_ENERGY_ADDED,
     CONF_ENERGY_REMAINING,
@@ -32,6 +33,7 @@ from .const import (
     CONF_IMPORT_PRICE,
     CONF_IMPORT_PRICE_ENTITY,
     CONF_LOAD_POWER,
+    CONF_LOCATION,
     CONF_MIN_TRIP_MILES,
     CONF_ODOMETER,
     CONF_OUTSIDE_TEMP,
@@ -41,6 +43,7 @@ from .const import (
     CONF_SPEED,
     DEFAULT_CAPACITY,
     DEFAULT_COMPARE_ECONOMY,
+    DEFAULT_COMPARE_NAME,
     DEFAULT_EXPORT_PRICE,
     DEFAULT_FUEL_PRICE,
     DEFAULT_IMPORT_PRICE,
@@ -170,6 +173,17 @@ class Tracker:
             v = self.conf.get(fixed_key)
         return float(default if v is None else v)
 
+    def place(self) -> str | None:
+        """Where the car is, as a zone name only: "Home", another zone's name, or "Away". Never an address or a position."""
+        eid = self.conf.get(CONF_LOCATION)
+        st = self.hass.states.get(eid) if eid else None
+        if st is None or st.state in (STATE_UNKNOWN, STATE_UNAVAILABLE):
+            return None
+        if st.state == "not_home":
+            return "Away"
+        zone = self.hass.states.get(f"zone.{st.state}")
+        return zone.name if zone else st.state.replace("_", " ").title()
+
     def import_price(self) -> float:
         return self._price(CONF_IMPORT_PRICE_ENTITY, CONF_IMPORT_PRICE, DEFAULT_IMPORT_PRICE)
 
@@ -253,7 +267,12 @@ class Tracker:
                 odo = self._num(CONF_ODOMETER)
                 if odo is not None:
                     self.trip = TripSession(
-                        now.isoformat(), odo, self._num(CONF_ENERGY_REMAINING), self._num(CONF_BATTERY_LEVEL), outside_temp=self._num(CONF_OUTSIDE_TEMP)
+                        now.isoformat(),
+                        odo,
+                        self._num(CONF_ENERGY_REMAINING),
+                        self._num(CONF_BATTERY_LEVEL),
+                        outside_temp=self._num(CONF_OUTSIDE_TEMP),
+                        start_place=self.place(),
                     )
             self.parked_at = None
         elif self.trip is not None and gear == "p":
@@ -301,6 +320,8 @@ class Tracker:
             float(self.conf.get(CONF_COMPARE_ECONOMY) or DEFAULT_COMPARE_ECONOMY),
             self.conf.get(CONF_COMPARE_UNIT) or ECONOMY_MPG_UK,
             float(self.conf.get(CONF_FUEL_PRICE) or DEFAULT_FUEL_PRICE),
+            end_place=self.place(),
+            compare_name=self.conf.get(CONF_COMPARE_NAME) or DEFAULT_COMPARE_NAME,
         )
         if receipt["miles"] < float(self.conf.get(CONF_MIN_TRIP_MILES) or DEFAULT_MIN_TRIP_MILES):
             self.save(now=True)  # the energy was still used; no receipt for a short shuffle

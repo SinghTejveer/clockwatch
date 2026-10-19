@@ -27,9 +27,21 @@ async def test_everything_is_found_and_the_entry_created(hass: HomeAssistant, ca
     r = await hass.config_entries.flow.async_configure(r["flow_id"], {"car_device": car})
     assert r["step_id"] == "car"
     assert suggested(r, "charging_state_entity") == "sensor.charging" and suggested(r, "odometer_entity") == "sensor.odometer"
-    assert suggested(r, "energy_remaining_entity") == "sensor.energy_remaining"
-    car_data = {k: suggested(r, k) for k in ("charging_state_entity", "charger_power_entity", "energy_added_entity", "battery_level_entity",
-                                             "energy_remaining_entity", "odometer_entity", "shift_state_entity", "speed_entity", "outside_temp_entity")}
+    assert suggested(r, "energy_remaining_entity") == "sensor.energy_remaining" and suggested(r, "location_entity") == "device_tracker.location"
+    car_data = {
+        k: suggested(r, k)
+        for k in (
+            "charging_state_entity",
+            "charger_power_entity",
+            "energy_added_entity",
+            "battery_level_entity",
+            "energy_remaining_entity",
+            "odometer_entity",
+            "shift_state_entity",
+            "speed_entity",
+            "outside_temp_entity",
+        )
+    }
     r = await hass.config_entries.flow.async_configure(r["flow_id"], {**car_data, "battery_capacity_kwh": 57.5})
     assert r["step_id"] == "home"
     assert suggested(r, "solar_power_entity") == "sensor.my_home_solar_power" and suggested(r, "load_power_entity") == "sensor.my_home_load_power"
@@ -37,8 +49,9 @@ async def test_everything_is_found_and_the_entry_created(hass: HomeAssistant, ca
     r = await hass.config_entries.flow.async_configure(r["flow_id"], home)
     assert r["step_id"] == "prices"
     assert suggested(r, "import_price_entity") == IMPORT and suggested(r, "export_price_entity") == EXPORT
-    r = await hass.config_entries.flow.async_configure(r["flow_id"], {"import_price_entity": IMPORT, "import_price": 0.25, "export_price_entity": EXPORT,
-                                                                      "export_price": 0.15, "solar_value": "export"})
+    r = await hass.config_entries.flow.async_configure(
+        r["flow_id"], {"import_price_entity": IMPORT, "import_price": 0.25, "export_price_entity": EXPORT, "export_price": 0.15, "solar_value": "export"}
+    )
     assert r["step_id"] == "compare"
     r = await hass.config_entries.flow.async_configure(r["flow_id"], COMPARE)
     assert r["type"] is FlowResultType.CREATE_ENTRY and r["title"] == "Clockwatch · Model 3"
@@ -48,8 +61,15 @@ async def test_everything_is_found_and_the_entry_created(hass: HomeAssistant, ca
 async def test_required_sensors_are_checked(hass: HomeAssistant, car: str) -> None:
     r = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_USER})
     r = await hass.config_entries.flow.async_configure(r["flow_id"], {"car_device": car})
-    r = await hass.config_entries.flow.async_configure(r["flow_id"], {"charging_state_entity": "sensor.charging", "charger_power_entity": "sensor.charger_power",
-                                                                      "odometer_entity": "sensor.not_there", "battery_capacity_kwh": 57.5})
+    r = await hass.config_entries.flow.async_configure(
+        r["flow_id"],
+        {
+            "charging_state_entity": "sensor.charging",
+            "charger_power_entity": "sensor.charger_power",
+            "odometer_entity": "sensor.not_there",
+            "battery_capacity_kwh": 57.5,
+        },
+    )
     assert r["type"] is FlowResultType.FORM and r["step_id"] == "car"
     assert r["errors"] == {"odometer_entity": "not_reporting", "shift_state_entity": "required"}
 

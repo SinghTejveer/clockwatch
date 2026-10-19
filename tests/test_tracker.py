@@ -153,9 +153,14 @@ async def test_a_drive_gets_a_receipt_costed_from_what_charged_the_car(hass: Hom
     clock = Clock(hass, entry)
     events = []
     hass.bus.async_listen(EVENT_TRIP, lambda e: events.append(e.data))
+    clock.set("device_tracker.location", "home")
+    clock.set("sensor.shift_state", "d")
+    start(clock)
+    clock.set("device_tracker.location", "work")
     drive(clock, 14.2, 3.4)
     await hass.async_block_till_done()
     r = t.last_trip
+    assert r["from"] == "Home" and r["to"] == "Work" and r["compare_name"] == "the X3 M40i"
     assert r["miles"] == approx(14.2) and r["kwh"] == approx(3.4) and r["cost"] == approx(0.255)
     assert r["sunshine"] == approx(0.6) and r["max_mph"] == 52 and r["outside_temp"] == 9
     assert r["petrol_cost"] == approx(4.09, abs=0.01) and r["saved"] == approx(3.83, abs=0.01)
@@ -202,8 +207,9 @@ async def test_month_sensors_and_the_receipts_action(hass: HomeAssistant, setup_
     await hass.async_block_till_done()
     month = t.month(clock.now)
     assert month["charges"] == 1 and month["trips"] == 1 and month["solar_share"] == approx(1.0)
-    r = await hass.services.async_call(DOMAIN, "history", {"kind": "both", "limit": 5, "month": clock.now.strftime("%Y-%m")}, blocking=True,
-                                       return_response=True)
+    r = await hass.services.async_call(
+        DOMAIN, "history", {"kind": "both", "limit": 5, "month": clock.now.strftime("%Y-%m")}, blocking=True, return_response=True
+    )
     assert len(r["charges"]) == 1 and len(r["trips"]) == 1 and r["month"]["miles"] == approx(14.2)
 
 
@@ -232,3 +238,11 @@ async def test_home_battery_remembers_what_charged_it(hass: HomeAssistant, setup
     clock.house(solar=6.0, battery=-5.0, grid=-0.6, load=0.4)  # then from spare sunshine, valued at 9p
     clock.step(60)
     assert home.kwh == approx(10.0, abs=0.02) and home.unit_cost == approx(0.0825, abs=0.0005) and home.solar_share == approx(0.5, abs=0.01)
+
+
+async def test_away_from_any_zone_is_just_away(hass: HomeAssistant, setup_entry) -> None:
+    entry = await setup_entry()
+    clock = Clock(hass, entry)
+    clock.set("device_tracker.location", "not_home")
+    drive(clock, 5.0, 1.2)
+    assert entry.runtime_data.last_trip["from"] == "Away" and entry.runtime_data.last_trip["to"] == "Away"

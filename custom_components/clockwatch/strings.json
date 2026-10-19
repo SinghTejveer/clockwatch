@@ -4,7 +4,9 @@
       "user": {
         "title": "Choose your car",
         "description": "Clockwatch writes a receipt for every charge and every drive of this car.",
-        "data": {"car_device": "Car"}
+        "data": {
+          "car_device": "Car"
+        }
       },
       "car": {
         "title": "The car's sensors",
@@ -19,7 +21,8 @@
           "shift_state_entity": "Gear (shift state)",
           "speed_entity": "Speed (optional)",
           "outside_temp_entity": "Outside temperature (optional)",
-          "battery_capacity_kwh": "Usable battery size"
+          "battery_capacity_kwh": "Usable battery size",
+          "location_entity": "Location (optional; only the zone name is kept)"
         },
         "data_description": {
           "energy_remaining_entity": "Gives the most accurate energy for each trip. Without it, the battery percentage and size are used.",
@@ -85,7 +88,8 @@
           "shift_state_entity": "Gear (shift state)",
           "speed_entity": "Speed (optional)",
           "outside_temp_entity": "Outside temperature (optional)",
-          "battery_capacity_kwh": "Usable battery size"
+          "battery_capacity_kwh": "Usable battery size",
+          "location_entity": "Location (optional; only the zone name is kept)"
         }
       },
       "home": {
@@ -125,13 +129,27 @@
   },
   "entity": {
     "sensor": {
-      "last_charge": {"name": "Last charge"},
-      "last_trip": {"name": "Last trip"},
-      "month_charge_cost": {"name": "Charging cost this month"},
-      "month_solar_share": {"name": "Solar share this month"},
-      "month_miles": {"name": "Miles this month"},
-      "month_cost_per_mile": {"name": "Cost per mile this month"},
-      "month_saved": {"name": "Saved vs petrol this month"}
+      "last_charge": {
+        "name": "Last charge"
+      },
+      "last_trip": {
+        "name": "Last trip"
+      },
+      "month_charge_cost": {
+        "name": "Charging cost this month"
+      },
+      "month_solar_share": {
+        "name": "Solar share this month"
+      },
+      "month_miles": {
+        "name": "Miles this month"
+      },
+      "month_cost_per_mile": {
+        "name": "Cost per mile this month"
+      },
+      "month_saved": {
+        "name": "Saved vs petrol this month"
+      }
     }
   },
   "services": {
@@ -139,10 +157,22 @@
       "name": "Receipts",
       "description": "Recent charge and trip receipts, newest first, with the month's totals.",
       "fields": {
-        "config_entry_id": {"name": "Car", "description": "Which Clockwatch entry. Not needed with one car."},
-        "kind": {"name": "Which", "description": "charges, trips, or both."},
-        "limit": {"name": "How many", "description": "The most of each to return."},
-        "month": {"name": "Month", "description": "Only this month, as YYYY-MM."}
+        "config_entry_id": {
+          "name": "Car",
+          "description": "Which Clockwatch entry. Not needed with one car."
+        },
+        "kind": {
+          "name": "Which",
+          "description": "charges, trips, or both."
+        },
+        "limit": {
+          "name": "How many",
+          "description": "The most of each to return."
+        },
+        "month": {
+          "name": "Month",
+          "description": "Only this month, as YYYY-MM."
+        }
       }
     }
   }

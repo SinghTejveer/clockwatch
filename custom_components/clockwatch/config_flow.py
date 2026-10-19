@@ -43,6 +43,7 @@ from .const import (
     CONF_IMPORT_PRICE,
     CONF_IMPORT_PRICE_ENTITY,
     CONF_LOAD_POWER,
+    CONF_LOCATION,
     CONF_MIN_TRIP_MILES,
     CONF_ODOMETER,
     CONF_OUTSIDE_TEMP,
@@ -109,6 +110,9 @@ def detect(hass: HomeAssistant, device_id: str) -> tuple[dict[str, Any], list[st
                 if e.disabled_by and key in REQUIRED_CAR + (CONF_BATTERY_LEVEL,):
                     disabled.append(e.entity_id)
                 break
+    tracker = next((e for e in car_entities if e.platform == TESLEMETRY and e.domain == "device_tracker" and (e.unique_id or "").endswith("-location")), None)
+    if tracker:
+        found[CONF_LOCATION] = tracker.entity_id
     if device:  # the energy site in the same Teslemetry account as the car
         for entry in hass.config_entries.async_entries(TESLEMETRY):
             entities = er.async_entries_for_config_entry(ent_reg, entry.entry_id)
@@ -134,6 +138,7 @@ def car_schema(d: dict[str, Any]) -> vol.Schema:
     return vol.Schema(
         {
             **{_opt(k, d): SENSOR for k in CAR_KEYS},
+            _opt(CONF_LOCATION, d): EntitySelector(EntitySelectorConfig(domain="device_tracker")),
             vol.Required(CONF_CAPACITY, default=d.get(CONF_CAPACITY, DEFAULT_CAPACITY)): NumberSelector(
                 NumberSelectorConfig(min=10, max=250, step=0.5, unit_of_measurement="kWh", mode=NumberSelectorMode.BOX)
             ),

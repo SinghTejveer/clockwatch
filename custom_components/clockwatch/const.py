@@ -17,6 +17,7 @@ CONF_ODOMETER: Final = "odometer_entity"
 CONF_SHIFT_STATE: Final = "shift_state_entity"
 CONF_OUTSIDE_TEMP: Final = "outside_temp_entity"
 CONF_SPEED: Final = "speed_entity"
+CONF_LOCATION: Final = "location_entity"
 CONF_CAPACITY: Final = "battery_capacity_kwh"
 
 # home energy
@@ -73,3 +74,5 @@ SRC_SOLAR: Final = "solar"
 SRC_BATTERY: Final = "battery"
 SRC_GRID: Final = "grid"
 SOURCES: Final = (SRC_SOLAR, SRC_BATTERY, SRC_GRID)
+
+CARD_URL = "/clockwatch/clockwatch-cards.js"

@@ -206,6 +206,7 @@ class TripSession:
     soc_start: float | None
     max_speed: float = 0.0  # mph
     outside_temp: float | None = None
+    start_place: str | None = None  # a Home Assistant zone name ("Home", "Work") or "Away"; never an address
 
     def finish(
         self,
@@ -220,6 +221,8 @@ class TripSession:
         economy: float,
         economy_unit: str,
         fuel_price: float,
+        end_place: str | None = None,
+        compare_name: str | None = None,
     ) -> dict[str, Any]:
         miles = max(0.0, odometer_end - self.odometer_start)
         if self.energy_start is not None and energy_end is not None:
@@ -248,6 +251,9 @@ class TripSession:
             "outside_temp": self.outside_temp,
             "petrol_cost": round(petrol, 4),
             "saved": round(petrol - cost, 4),
+            "compare_name": compare_name,
+            "from": self.start_place,
+            "to": end_place,
         }
 
     def to_dict(self) -> dict[str, Any]:
@@ -262,7 +268,15 @@ class TripSession:
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> TripSession:
-        return cls(d["started"], float(d["odometer_start"]), d.get("energy_start"), d.get("soc_start"), float(d.get("max_speed") or 0.0), d.get("outside_temp"))
+        return cls(
+            d["started"],
+            float(d["odometer_start"]),
+            d.get("energy_start"),
+            d.get("soc_start"),
+            float(d.get("max_speed") or 0.0),
+            d.get("outside_temp"),
+            d.get("start_place"),
+        )
 
 
 def month_summary(charges: list[dict[str, Any]], trips: list[dict[str, Any]], month: str) -> dict[str, Any]:

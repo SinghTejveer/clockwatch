@@ -1,7 +1,7 @@
 {
   "domain": "clockwatch",
   "name": "Clockwatch",
-  "after_dependencies": ["teslemetry"],
+  "after_dependencies": ["frontend", "http", "teslemetry"],
   "codeowners": ["@SinghTejveer"],
   "config_flow": true,
   "dependencies": [],
@@ -10,5 +10,5 @@
   "iot_class": "calculated",
   "issue_tracker": "https://github.com/SinghTejveer/clockwatch/issues",
   "requirements": [],
-  "version": "0.1.0"
+  "version": "0.2.0"
 }
