@@ -109,11 +109,14 @@ def detect(hass: HomeAssistant, device_id: str) -> tuple[dict[str, Any], list[st
                 if e.disabled_by and key in REQUIRED_CAR + (CONF_BATTERY_LEVEL,):
                     disabled.append(e.entity_id)
                 break
-    if device:  # the energy site in the same Teslemetry account
-        for entry_id in device.config_entries:
-            for e in er.async_entries_for_config_entry(ent_reg, entry_id):
+    if device:  # the energy site in the same Teslemetry account as the car
+        for entry in hass.config_entries.async_entries(TESLEMETRY):
+            entities = er.async_entries_for_config_entry(ent_reg, entry.entry_id)
+            if not any(e.device_id == device_id for e in entities):
+                continue
+            for e in entities:
                 for key, suffix in SITE_KEYS.items():
-                    if e.platform == TESLEMETRY and e.domain == "sensor" and (e.unique_id or "").endswith("-" + suffix) and not e.disabled_by:
+                    if e.domain == "sensor" and (e.unique_id or "").endswith("-" + suffix) and not e.disabled_by:
                         found.setdefault(key, e.entity_id)
     for st in hass.states.async_all("sensor"):
         if re.search(r"electricity_.*_export_current_rate$", st.entity_id):
