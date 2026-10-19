@@ -1,0 +1,149 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Choose your car",
+        "description": "Clockwatch writes a receipt for every charge and every drive of this car.",
+        "data": {"car_device": "Car"}
+      },
+      "car": {
+        "title": "The car's sensors",
+        "description": "Found automatically from Teslemetry; change any that are wrong. Charging state, charger power, odometer and gear are needed. Teslemetry switches some of these off by default; switched off here: {disabled}. Turn them on under the car's device page, wait a minute, then continue.",
+        "data": {
+          "charging_state_entity": "Charging state",
+          "charger_power_entity": "Charger power",
+          "energy_added_entity": "Energy added (optional)",
+          "battery_level_entity": "Battery level",
+          "energy_remaining_entity": "Energy remaining (optional)",
+          "odometer_entity": "Odometer",
+          "shift_state_entity": "Gear (shift state)",
+          "speed_entity": "Speed (optional)",
+          "outside_temp_entity": "Outside temperature (optional)",
+          "battery_capacity_kwh": "Usable battery size"
+        },
+        "data_description": {
+          "energy_remaining_entity": "Gives the most accurate energy for each trip. Without it, the battery percentage and size are used.",
+          "battery_capacity_kwh": "Used when energy remaining is not available. About 57.5 kWh for a Model 3 RWD, 75 kWh for a Long Range."
+        }
+      },
+      "home": {
+        "title": "Your home's energy",
+        "description": "Where each charge's energy comes from. Leave all four empty if you have no solar or home battery: every charge is then counted as grid.",
+        "data": {
+          "solar_power_entity": "Solar power",
+          "battery_power_entity": "Home battery power (positive when discharging)",
+          "grid_power_entity": "Grid power (positive when importing)",
+          "load_power_entity": "Home power (everything the house uses, including the car)"
+        }
+      },
+      "prices": {
+        "title": "Prices",
+        "description": "A price sensor is used when chosen; the fixed price fills in when it has no value.",
+        "data": {
+          "import_price_entity": "Electricity price sensor",
+          "import_price": "Fixed electricity price",
+          "export_price_entity": "Export price sensor",
+          "export_price": "Fixed export price",
+          "solar_value": "Solar energy in the car is worth"
+        },
+        "data_description": {
+          "solar_value": "The export price is what you gave up by putting the sunshine in the car instead of selling it."
+        }
+      },
+      "compare": {
+        "title": "The petrol car to compare with",
+        "data": {
+          "compare_name": "Name, e.g. \"the X3 M40i\"",
+          "compare_economy": "Fuel economy",
+          "compare_economy_unit": "Economy is in",
+          "fuel_price_per_litre": "Fuel price per litre",
+          "min_trip_miles": "Shortest trip that gets a receipt"
+        }
+      }
+    },
+    "error": {
+      "required": "Needed for receipts.",
+      "not_reporting": "This sensor has no value yet. If Teslemetry switched it off, turn it on and wait a minute."
+    },
+    "abort": {
+      "no_cars": "No Teslemetry car found. Set up the Teslemetry integration first.",
+      "already_configured": "This car already has Clockwatch."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "The car's sensors",
+        "description": "Charging state, charger power, odometer and gear are needed. Switched off: {disabled}.",
+        "data": {
+          "charging_state_entity": "Charging state",
+          "charger_power_entity": "Charger power",
+          "energy_added_entity": "Energy added (optional)",
+          "battery_level_entity": "Battery level",
+          "energy_remaining_entity": "Energy remaining (optional)",
+          "odometer_entity": "Odometer",
+          "shift_state_entity": "Gear (shift state)",
+          "speed_entity": "Speed (optional)",
+          "outside_temp_entity": "Outside temperature (optional)",
+          "battery_capacity_kwh": "Usable battery size"
+        }
+      },
+      "home": {
+        "title": "Your home's energy",
+        "data": {
+          "solar_power_entity": "Solar power",
+          "battery_power_entity": "Home battery power (positive when discharging)",
+          "grid_power_entity": "Grid power (positive when importing)",
+          "load_power_entity": "Home power (everything the house uses, including the car)"
+        }
+      },
+      "prices": {
+        "title": "Prices",
+        "data": {
+          "import_price_entity": "Electricity price sensor",
+          "import_price": "Fixed electricity price",
+          "export_price_entity": "Export price sensor",
+          "export_price": "Fixed export price",
+          "solar_value": "Solar energy in the car is worth"
+        }
+      },
+      "compare": {
+        "title": "The petrol car to compare with",
+        "data": {
+          "compare_name": "Name, e.g. \"the X3 M40i\"",
+          "compare_economy": "Fuel economy",
+          "compare_economy_unit": "Economy is in",
+          "fuel_price_per_litre": "Fuel price per litre",
+          "min_trip_miles": "Shortest trip that gets a receipt"
+        }
+      }
+    },
+    "error": {
+      "required": "Needed for receipts.",
+      "not_reporting": "This sensor has no value yet. If Teslemetry switched it off, turn it on and wait a minute."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "last_charge": {"name": "Last charge"},
+      "last_trip": {"name": "Last trip"},
+      "month_charge_cost": {"name": "Charging cost this month"},
+      "month_solar_share": {"name": "Solar share this month"},
+      "month_miles": {"name": "Miles this month"},
+      "month_cost_per_mile": {"name": "Cost per mile this month"},
+      "month_saved": {"name": "Saved vs petrol this month"}
+    }
+  },
+  "services": {
+    "history": {
+      "name": "Receipts",
+      "description": "Recent charge and trip receipts, newest first, with the month's totals.",
+      "fields": {
+        "config_entry_id": {"name": "Car", "description": "Which Clockwatch entry. Not needed with one car."},
+        "kind": {"name": "Which", "description": "charges, trips, or both."},
+        "limit": {"name": "How many", "description": "The most of each to return."},
+        "month": {"name": "Month", "description": "Only this month, as YYYY-MM."}
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+[project]
+name = "clockwatch"
+version = "0.1.0"
+description = "Home Assistant integration: receipts for every EV charge and drive, with solar share, cost per mile and a petrol comparison."
+requires-python = ">=3.13"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 160
+target-version = "py313"

@@ -1,0 +1,14 @@
+{
+  "domain": "clockwatch",
+  "name": "Clockwatch",
+  "after_dependencies": ["teslemetry"],
+  "codeowners": ["@SinghTejveer"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/SinghTejveer/clockwatch",
+  "integration_type": "service",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/SinghTejveer/clockwatch/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}
