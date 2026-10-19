@@ -470,7 +470,7 @@
       const label = new Date(m.month + "-01T12:00:00").toLocaleDateString(undefined, { month: "long", year: "numeric" });
       const w = this._weeks || [];
       const max = Math.max(1, ...w.map((x) => x.solar + x.battery + x.grid));
-      const bars = w.length
+      const bars = w.some((x) => x.solar + x.battery + x.grid > 0)
         ? `<div class="weeks" role="img" aria-label="Charging energy by week, by source">${w.map((x) => {
             const tot = x.solar + x.battery + x.grid;
             return `<div class="wk" style="height:${Math.max(4, (tot / max) * 100)}%">${tot ? `<i style="flex:${x.grid};background:${GRID}"></i><i style="flex:${x.battery};background:${BATT}"></i><i style="flex:${x.solar};background:${SUN}"></i>` : ""}</div>`;
